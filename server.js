@@ -1,56 +1,35 @@
 const express = require('express');
-const multer = require('multer');
-const fs = require('fs');
-const axios = require('axios');
-
+const path = require('path');
 const app = express();
-const upload = multer({ dest: 'uploads/' });
-
-app.use(express.static(__dirname));
-app.use(express.json());
-
-let botLoop = null;
-
-app.post('/api/start', upload.fields([{ name: 'cookie' }, { name: 'abuse' }]), (req, res) => {
-    const { target, delay } = req.body;
-    const delayMs = parseInt(delay || 2) * 1000;
-
-    if (!req.files || !req.files['cookie'] || !req.files['abuse']) {
-        return res.json({ success: false });
-    }
-
-    const cookies = fs.readFileSync(req.files['cookie'][0].path, 'utf8').split('\n').filter(Boolean);
-    const messages = fs.readFileSync(req.files['abuse'][0].path, 'utf8').split('\n').filter(Boolean);
-
-    let msgIdx = 0, cookieIdx = 0;
-    if (botLoop) clearInterval(botLoop);
-
-    botLoop = setInterval(async () => {
-        if (msgIdx >= messages.length) msgIdx = 0;
-        
-        try {
-            // फेसबुक मैसेंजर या कमेंट एंडपॉइंट्स पर पोस्ट रिक्वेस्ट भेजने का मॉड्यूल
-            await axios.post(`https://facebook.com{target}/comments`, {
-                message: messages[msgIdx]
-            }, {
-                headers: { 'Authorization': `Bearer ${cookies[cookieIdx].trim()}` }
-            });
-            console.log(`Sent: ${messages[msgIdx]}`);
-        } catch (e) {
-            console.log("Token expired or rate limit. Automatically shifting index.");
-        }
-
-        msgIdx++;
-        cookieIdx = (cookieIdx + 1) % cookies.length;
-    }, delayMs);
-
-    res.json({ success: true });
-});
-
-app.post('/api/stop', (req, res) => {
-    if (botLoop) { clearInterval(botLoop); botLoop = null; }
-    res.json({ success: true });
-});
-
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// JSON और फॉर्म डेटा रीड करने के लिए मिकैनिज़म
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// HTML और CSS फाइलों को पब्लिकली सर्व करने के लिए
+app.use(express.static(__dirname));
+
+// मुख्य पेज लोड होने पर index.html दिखाना
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+// जब यूजर फॉर्म सबमिट करेगा, तो यह API ट्रिगर होगी
+app.post('/api/start-bot', (req, res) => {
+    const { adminId, botUid, loginMode, appStateData, prefix } = req.body;
+
+    console.log("--- रिसीव हुआ बोट कॉन्फ़िगरेशन ---");
+    console.log(`Admin ID: ${adminId}`);
+    console.log(`Bot UID: ${botUid}`);
+    console.log(`Prefix: ${prefix}`);
+    
+    // यहाँ आप Facebook chat API (जैसे fca-unofficial) का कोड जोड़कर 
+    // बोट को सीधे लॉगिन करवा सकते हैं।
+    
+    res.json({ success: true, message: "Bot configuration received! Starting bot..." });
+});
+
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
