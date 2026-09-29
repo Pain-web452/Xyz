@@ -11,51 +11,42 @@
     <div class="app-container">
         <!-- Top Title Bar -->
         <header class="main-header">
-            <div class="logo">👑 RK RAJA</div>
+            <div class="logo">👑 PETER WONDERWORLD GC OWNER</div>
             <div class="badge">MASTI BOT v7</div>
         </header>
 
-        <!-- Configuration Form Area -->
+        <!-- [PART 1] Configuration Form Area -->
         <main class="form-container">
             <h2 class="section-title">⚙️ Bot Configuration</h2>
 
             <form id="botForm">
-                <!-- Admin ID Input -->
                 <div class="input-group">
                     <label><span class="badge-purple">ID</span> Admin ID (Facebook numeric ID)</label>
                     <input type="text" id="adminId" placeholder="100012345678901" required>
                 </div>
 
-                <!-- Bot UID Input -->
                 <div class="input-group">
                     <label>🤖 Bot UID (optional)</label>
                     <input type="text" id="botUid" placeholder="61594284131246">
                 </div>
 
-                <!-- Login Mode Options -->
                 <div class="login-mode-section">
                     <label>🔐 Login Mode</label>
                     <button type="button" id="modeJson" class="mode-btn active">🍪 C3C / AppState (JSON)</button>
                     <button type="button" id="modeString" class="mode-btn">📝 Raw Cookies (String)</button>
                 </div>
 
-                <!-- AppState File Upload & Text Box -->
                 <div class="upload-section">
                     <label id="uploadLabel">🍪 C3C / AppState (JSON array)</label>
-                    
-                    <!-- Drag Box -->
                     <div class="drag-drop-box" id="dropBox">
                         <div class="folder-icon">📂</div>
                         <p>Click karo ya file drag karo (.json / .txt)</p>
                         <input type="file" id="fileInput" style="display: none;" accept=".json,.txt">
                     </div>
-
-                    <!-- Direct Text Box -->
                     <label class="sub-label">Ya niche paste karo directly:</label>
                     <textarea id="appStateData" placeholder='[{"key":"c_user","value":"...","domain":".facebook.com"}, ...]' required></textarea>
                 </div>
 
-                <!-- Prefix Selector Grid -->
                 <div class="prefix-section">
                     <label>🔣 Bot Prefix</label>
                     <div class="prefix-grid">
@@ -65,38 +56,60 @@
                         <button type="button" class="prefix-btn">@</button>
                     </div>
                 </div>
-
-                <!-- Start Action Button -->
-                <button type="submit" class="submit-action-btn">🚀 Start Masti Bot</button>
             </form>
         </main>
+
+        <!-- [NEW PART 2] FYT File Upload Container -->
+        <section class="form-container">
+            <div class="section-header-row">
+                <h2 class="section-title">📄 FYT File</h2>
+                <span class="status-badge badge-red">Not Loaded</span>
+            </div>
+
+            <div class="fyt-upload-box">
+                <label>📁 FYT TXT File</label>
+                <!-- Drag Text Box -->
+                <div class="drag-drop-box dash-box" id="fytDropBox">
+                    <div class="file-text-icon">📄</div>
+                    <p>Click karo ya TXT file drag & drop karo</p>
+                    <input type="file" id="fytFileInput" style="display: none;" accept=".txt">
+                </div>
+                <p class="help-text">TXT ki lines bot me load hongi.</p>
+                <p class="help-text">Last line ke baad bot dobara first line se continue karega.</p>
+            </div>
+
+            <!-- Line Interval Input -->
+            <div class="input-group" style="margin-top: 15px;">
+                <label>⏱️ Line Interval (seconds)</label>
+                <input type="number" id="lineInterval" value="10" placeholder="10">
+                <p class="help-text">Example: 10 = har 10 second me next line.</p>
+            </div>
+
+            <!-- Action Buttons -->
+            <button type="button" class="action-btn btn-pink-gradient">📂 Upload FYT File</button>
+            <button type="button" class="action-btn btn-clear">🗑️ Clear</button>
+        </section>
+
+        <!-- [NEW PART 3] Dashboard / Live Logs Container -->
+        <section class="form-container" style="margin-bottom: 25px;">
+            <div class="section-header-row">
+                <h2 class="section-title">📊 Dashboard / Live Logs</h2>
+                <span class="status-badge badge-red">Not Started</span>
+            </div>
+
+            <!-- Terminal / Black Log Box -->
+            <div class="terminal-log-box">
+                <p class="log-green">Dashboard connected</p>
+                <p class="log-gray">[2026-09-29T16:55:12.788Z] INFO: Dashboard connected</p>
+                <p class="log-gray">Status: Not started</p>
+            </div>
+        </section>
     </div>
 
-    <!-- UI Interaction and Server Connection Script -->
+    <!-- UI Interaction Script -->
     <script>
-        let selectedLoginMode = "C3C / AppState (JSON)";
+        // पुराने बटन टॉगल और फाइल रीडर का लॉजिक यहाँ रहेगा
         let selectedPrefix = "/";
-
-        // Login Mode Toggle
-        const modeJsonBtn = document.getElementById('modeJson');
-        const modeStringBtn = document.getElementById('modeString');
-        const uploadLabel = document.getElementById('uploadLabel');
-
-        modeJsonBtn.addEventListener('click', () => {
-            modeJsonBtn.classList.add('active');
-            modeStringBtn.classList.remove('active');
-            selectedLoginMode = "C3C / AppState (JSON)";
-            uploadLabel.innerText = "🍪 C3C / AppState (JSON array)";
-        });
-
-        modeStringBtn.addEventListener('click', () => {
-            modeStringBtn.classList.add('active');
-            modeJsonBtn.classList.remove('active');
-            selectedLoginMode = "Raw Cookies (String)";
-            uploadLabel.innerText = "📝 Raw Cookies (String text)";
-        });
-
-        // Prefix Multi-buttons Logic
         const prefixButtons = document.querySelectorAll('.prefix-btn');
         prefixButtons.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -106,45 +119,15 @@
             });
         });
 
-        // File Selection via Click
-        const dropBox = document.getElementById('dropBox');
-        const fileInput = document.getElementById('fileInput');
-        const textarea = document.getElementById('appStateData');
-
-        dropBox.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', (e) => {
+        // नए FYT फाइल अपलोड बॉक्स के लिए क्लिक लॉजिक
+        const fytDropBox = document.getElementById('fytDropBox');
+        const fytFileInput = document.getElementById('fytFileInput');
+        fytDropBox.addEventListener('click', () => fytFileInput.click());
+        
+        fytFileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(evt) {
-                    textarea.value = evt.target.result;
-                };
-                reader.readAsText(file);
-            }
-        });
-
-        // Submit Form Data to Server Logic
-        document.getElementById('botForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const payload = {
-                adminId: document.getElementById('adminId').value,
-                botUid: document.getElementById('botUid').value,
-                loginMode: selectedLoginMode,
-                appStateData: textarea.value,
-                prefix: selectedPrefix
-            };
-
-            try {
-                const response = await fetch('/api/start-bot', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const result = await response.json();
-                alert(result.message);
-            } catch (err) {
-                alert("सर्वर से कनेक्ट करने में खराबी आई!");
+            if(file) {
+                alert("File Selected: " + file.name);
             }
         });
     </script>
