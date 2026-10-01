@@ -1,7 +1,7 @@
 const express = require('express');
 const path = require('path');
 // नोट: आप अपनी सुविधा के अनुसार fca-project या कोई भी वर्किंग fca लाइब्रेरी इस्तेमाल कर सकते हैं
-const login = require('fca-project-or-any-active-fca'); 
+const login = require('fca-horizon-remake');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
