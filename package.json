@@ -1,12 +1,13 @@
 {
-  "name": "masti-bot-dashboard",
+  "name": "arjun-thakur-fb-bot",
   "version": "1.0.0",
-  "description": "RK Raja Masti Bot Panel",
+  "description": "Facebook Bot Control Panel",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "fca-project-or-any-active-fca": "^1.1.8"
   }
 }
