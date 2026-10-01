@@ -3,14 +3,14 @@ const path = require('path');
 const helmet = require('helmet');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
-const login = require('fca-horizon-remake'); 
+const login = require('fca-unofficial'); 
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // सुरक्षा सेटिंग्स (Security Middlewares)
 app.use(helmet({
-    contentSecurityPolicy: false // फ्रंटएंड स्क्रिप्ट्स को ब्लॉक होने से बचाने के लिए
+    contentSecurityPolicy: false
 }));
 app.use(cors());
 app.use(express.json());
@@ -18,8 +18,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // एंटी-स्पैम रेट लिमिटर
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 मिनट
-    max: 100, // प्रति IP अधिकतम 100 रिक्वेस्ट्स
+    windowMs: 15 * 60 * 1000,
+    max: 100,
     message: { success: false, message: "Too many requests, please try again later." }
 });
 app.use('/api/', limiter);
@@ -62,7 +62,6 @@ app.post('/api/start-bot', (req, res) => {
                 if ((event.type === "message" || event.type === "message_reply") && event.body) {
                     const messageBody = event.body.trim();
 
-                    // अगर मैसेज प्रिफिक्स (जैसे /) से शुरू होता है
                     if (messageBody.startsWith(botPrefix)) {
                         const args = messageBody.slice(botPrefix.length).trim().split(/ +/);
                         const command = args.shift().toLowerCase();
@@ -140,14 +139,14 @@ app.post('/api/start-bot', (req, res) => {
     }
 });
 
-// Render पर बोट को हमेशा एक्टिव रखने के लिए सेल्फ-पिंगर लॉजिक (24/7 लाइव)
+// 24/7 लाइव रखने के लिए पिंगर लॉजिक
 setInterval(() => {
     const host = process.env.RENDER_EXTERNAL_URL;
     if (host) {
         const axios = require('axios');
-        axios.get(host).then(() => console.log("Self-ping success - Keeping alive!")).catch(() => {});
+        axios.get(host).then(() => console.log("Self-ping success!")).catch(() => {});
     }
-}, 5 * 60 * 1000); // हर 5 मिनट में पिंग करेगा
+}, 5 * 60 * 1000);
 
 app.listen(PORT, () => {
     console.log(`सर्वर पोर्ट ${PORT} पर चल रहा है`);
