@@ -3,133 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> PETRR BOT PENAL</title>
+    <title>【 🌹 PETER BOT PENAL 🌹 】</title>
     <link href="https://googleapis.com" rel="stylesheet">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
-        body {
-            background-color: #d600d6;
-            background-image: radial-gradient(circle, #f000f0 10%, #bd00bd 90%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            position: relative;
-            overflow-x: hidden;
-        }
-        body::before, body::after {
-            content: "✨"; position: absolute; color: rgba(255, 255, 255, 0.6); font-size: 24px;
-        }
-        body::before { top: 15%; left: 10%; }
-        body::after { bottom: 20%; right: 12%; }
-        
-        .panel-container {
-            width: 100%; max-width: 450px;
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            border: 2px solid rgba(255, 255, 255, 0.25); border-radius: 25px;
-            padding: 30px 20px; box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2); text-align: center;
-        }
-        .header-box {
-            background: rgba(255, 255, 255, 0.1); border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 20px; padding: 15px 10px; margin-bottom: 25px;
-        }
-        .header-title {
-            color: #ffffff; font-size: 24px; font-weight: 700;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); line-height: 1.4;
-        }
-        .sub-heading {
-            color: #ffff00; font-size: 14px; font-weight: 600; margin-bottom: 30px;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
-        }
-        .form-group { text-align: left; margin-bottom: 22px; }
-        .form-label { display: block; color: #ffff00; font-size: 15px; font-weight: 600; margin-bottom: 8px; }
-        .form-input, .form-textarea {
-            width: 100%; background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.4);
-            border-radius: 15px; padding: 12px 15px; color: #ffffff; font-size: 14px; outline: none;
-        }
-        .form-textarea { resize: none; height: 120px; }
-        .form-input::placeholder, .form-textarea::placeholder { color: rgba(255, 255, 255, 0.7); }
-        
-        .start-btn {
-            background: linear-gradient(135deg, #ff007f, #ff00ff);
-            border: 2px solid rgba(255, 255, 255, 0.4); border-radius: 30px;
-            color: #ffffff; font-size: 18px; font-weight: 600; padding: 12px 40px;
-            cursor: pointer; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2); margin-top: 10px;
-        }
-        .start-btn:hover { background: linear-gradient(135deg, #ff1a8c, #ff33ff); }
-        
-        /* स्टेटस रिस्पॉन्स मैसेज एरिया */
-        #statusMessage {
-            margin-top: 15px; font-size: 14px; font-weight: 600; color: #ffffff;
-        }
+        body { background-color: #bd00d6; padding: 20px 15px; display: flex; flex-direction: column; gap: 20px; align-items: center; }
+        .container { width: 100%; max-width: 500px; background: rgba(255, 255, 255, 0.15); border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 25px; padding: 25px 20px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2); backdrop-filter: blur(8px); color: #ffffff; }
+        .header-title { text-align: center; font-size: 24px; font-weight: 600; margin-bottom: 20px; text-shadow: 0px 2px 5px rgba(0,0,0,0.3); }
+        .sub-header { text-align: center; font-size: 14px; margin-bottom: 20px; color: #fffb00; font-weight: 600; }
+        .log-box { background: rgba(0, 0, 0, 0.4); border-radius: 15px; padding: 15px; font-family: monospace; font-size: 12px; height: 12px; height: 130px; overflow-y: auto; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.2); }
+        .log-line { margin-bottom: 8px; color: #00ffcc; }
+        .log-header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .clear-btn { background: #ffcc00; color: #000; border: none; padding: 8px 18px; font-weight: 600; border-radius: 20px; cursor: pointer; font-size: 14px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; color: #fffb00; }
+        .form-group input, .form-group textarea { width: 100%; padding: 12px 15px; border-radius: 15px; border: 1px solid rgba(255, 255, 255, 0.5); background: rgba(255, 255, 255, 0.2); color: #ffffff; font-size: 14px; outline: none; }
+        .form-group textarea { height: 100px; resize: none; }
+        .submit-btn { width: 100%; padding: 14px; background: linear-gradient(45deg, #ff007f, #ff00ff); border: none; border-radius: 50px; color: white; font-size: 18px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .cmd-group { margin-bottom: 18px; border-bottom: 1px dashed rgba(255, 255, 255, 0.2); padding-bottom: 10px; }
+        .cmd-header { font-size: 14px; font-weight: 600; color: #fffb00; margin-bottom: 5px; }
+        .cmd-item { font-size: 14px; margin-left: 10px; }
+        .footer-credits { text-align: center; margin-top: 20px; font-weight: 600; font-size: 15px; color: #fffb00; }
     </style>
 </head>
 <body>
 
-    <div class="panel-container">
-        <div class="header-box">
-            <h1 class="header-title">✨ 🌹❤️ HASHIRAMA BOT PENAL ❤️🌹 ✨</h1>
+    <!-- 📋 BOT LOGS CONTAINER -->
+    <div class="container">
+        <div class="log-header-flex">
+            <h2 style="font-size: 18px;">Bot Logs 📝</h2>
+            <button class="clear-btn" onclick="clearLogs()">Clear Logs</button>
+        </div>
+        <div class="log-box" id="logContainer">
+            <!-- रीयल-टाइम लॉग्स यहाँ दिखेंगे -->
+        </div>
+    </div>
+
+    <!-- 📥 MAIN BOT INPUT PANEL -->
+    <div class="container">
+        <div class="header-title">✨【 🌹 PETER 🌹 】<br>THAKUR BOT PENAL 👑</div>
+        <div class="sub-header">💮 Your Ultimate Facebook Bot Control Center 💮</div>
+        
+        <div class="form-group">
+            <label>Facebook AppState (JSON):</label>
+            <textarea id="appState" placeholder="Paste your Facebook appState JSON here"></textarea>
+        </div>
+        <div class="form-group">
+            <label>Bot Prefix (Default "/"):</label>
+            <input type="text" id="prefix" value="/">
+        </div>
+        <div class="form-group">
+            <label>Admin Facebook ID:</label>
+            <input type="text" id="adminId" placeholder="Your Facebook user ID">
+        </div>
+        <button class="submit-btn" onclick="startBot()">Start Bot 👑</button>
+    </div>
+
+    <!-- 📊 COMMANDS PANEL -->
+    <div class="container">
+        <div class="header-title" style="font-size: 20px; margin-bottom: 10px;">Joined Groups 👥</div>
+        <div class="header-title" style="font-size: 16px; color: #ff007f;">【 💝 BOT COMMAND 💝 】</div>
+        
+        <div class="cmd-group">
+            <div class="cmd-header">/group on ➡️ Lock group name.</div>
+            <div class="cmd-header">/nickname on ➡️ Lock all nicknames.</div>
+        </div>
+        <div class="cmd-group">
+            <div class="cmd-header">🌟 **TARGET SYSTEM (ADMIN ONLY)**:</div>
+            <div class="cmd-item">/target on ➡️ Start auto-attack on someone.</div>
+            <div class="cmd-item">/target off ➡️ Stop attack.</div>
+        </div>
+        <div class="cmd-group">
+            <div class="cmd-header">⚔️ **FIGHT MODE (ADMIN ONLY)**:</div>
+            <div class="cmd-item">/fyt on ➡️ Start fight mode.</div>
+            <div class="cmd-item">/stop ➡️ Stop fight mode.</div>
+        </div>
+        <div class="cmd-group">
+            <div class="cmd-header">🆔 **ID DETAILS**:</div>
+            <div class="cmd-item">/tid ➡️ Get group ID.</div>
+            <div class="cmd-item">/uid ➡️ Get user ID.</div>
         </div>
 
-        <div class="sub-heading">🌸 Your Ultimate Facebook Bot Control Center 🌸</div>
-
-        <form id="botForm">
-            <div class="form-group">
-                <label class="form-label">Facebook AppState (JSON):</label>
-                <textarea class="form-textarea" id="appState" placeholder="Paste your Facebook appState JSON here" required></textarea>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Bot Prefix (Default "/"):</label>
-                <input class="form-input" type="text" id="botPrefix" value="/">
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Admin Facebook ID:</label>
-                <input class="form-input" type="text" id="adminId" placeholder="Your Facebook user ID" required>
-            </div>
-
-            <button type="submit" class="start-btn">Start Bot 👑</button>
-        </form>
-
-        <div id="statusMessage"></div>
+        <div class="footer-credits">
+            【 🌹 MADE BY PETER 🌹 】 - 2026
+        </div>
     </div>
 
     <script>
-        document.getElementById('botForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const statusDiv = document.getElementById('statusMessage');
-            statusDiv.innerText = "बोट स्टार्ट हो रहा है, कृपया प्रतीक्षा करें...";
-            statusDiv.style.color = "#ffff00";
-
-            const payload = {
+        function loadLogs() {
+            fetch('/api/status').then(res => res.json()).then(data => {
+                const container = document.getElementById('logContainer');
+                container.innerHTML = '';
+                data.logs.forEach(log => {
+                    const div = document.createElement('div');
+                    div.className = 'log-line';
+                    div.innerText = log;
+                    container.appendChild(div);
+                });
+            });
+        }
+        function clearLogs() {
+            fetch('/api/clear-logs', { method: 'POST' }).then(() => loadLogs());
+        }
+        function startBot() {
+            const data = {
                 appState: document.getElementById('appState').value,
-                prefix: document.getElementById('botPrefix').value,
+                prefix: document.getElementById('prefix').value,
                 adminId: document.getElementById('adminId').value
             };
-
-            try {
-                const response = await fetch('/api/start-bot', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const result = await response.json();
-
-                if (result.success) {
-                    statusDiv.innerText = "🟢 " + result.message;
-                    statusDiv.style.color = "#00ff00";
-                } else {
-                    statusDiv.innerText = "🔴 " + result.message;
-                    statusDiv.style.color = "#ff3333";
-                }
-            } catch (err) {
-                statusDiv.innerText = "🔴 सर्वर से कनेक्ट करने में खराबी आई!";
-                statusDiv.style.color = "#ff3333";
-            }
-        });
+            fetch('/api/start-bot', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            }).then(res => res.json()).then(resData => {
+                alert(resData.message);
+                loadLogs();
+            });
+        }
+        setInterval(loadLogs, 3000); // हर 3 सेकंड में लॉग्स अपडेट होंगे
+        loadLogs();
     </script>
 </body>
 </html>
