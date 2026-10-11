@@ -1,11 +1,26 @@
-import express from "express";import http from "http";import fs from "fs";import path from "path";import crypto from "crypto";import { FBClient } from "fb-messenger-e2ee";
-const app = express();const server = http.createServer(app);
+import express from "express";
+import http from "http";
+import fs from "fs";
+import path from "path";
+import crypto from "crypto";
+import { FBClient } from "fb-messenger-e2ee";
+
+const app = express();
+const server = http.createServer(app);
 
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
-// ========== CONFIGURATION ==========const USERS_FILE = "./users.json";const PORT = process.env.PORT || 10000;
-// ========== DATA STORE ==========const userTasks = new Map();let users = {};
-// ========== FILE OPERATIONS ==========function loadUsers() {
+
+// ========== CONFIGURATION ==========
+const USERS_FILE = "./users.json";
+const PORT = process.env.PORT || 10000;
+
+// ========== DATA STORE ==========
+const userTasks = new Map();
+let users = {};
+
+// ========== FILE OPERATIONS ==========
+function loadUsers() {
     try {
         if (fs.existsSync(USERS_FILE)) {
             users = JSON.parse(fs.readFileSync(USERS_FILE, "utf8"));
@@ -14,6 +29,7 @@ app.use(express.urlencoded({ extended: true, limit: "50mb" }));
         users = {};
     }
 }
+
 function saveUsers() {
     fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
 }
