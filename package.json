@@ -1,7 +1,7 @@
 {
   "name": "e2ee-cyber-engine",
   "version": "1.0.0",
-  "description": "E2EE Cyber Engine with Approval System - VIP Dashboard",
+  "description": "E2EE Cyber Engine - VIP Dashboard",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
@@ -12,9 +12,7 @@
     "e2ee",
     "messenger",
     "cyber",
-    "engine",
-    "approval",
-    "system"
+    "engine"
   ],
   "author": "Devil",
   "license": "MIT",
