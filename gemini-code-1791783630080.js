@@ -189,7 +189,7 @@ app.get("/", (req, res) => {
 
 app.post("/api/signup", (req, res) => {
     const { username, password } = req.body;
-    if (!username || username.length < 8 || password.length < 8) {
+    if (!username || username.length < 4 || password.length < 4) {
         return res.json({ status: "error", message: "Min 8 characters required!" });
     }
     if (users[username]) return res.json({ status: "error", message: "User already exists!" });
