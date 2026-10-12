@@ -134,11 +134,11 @@ app.get("/", (req, res) => {
         <div id="loginForm">
             <div class="input-group">
                 <label>👤 USERNAME</label>
-                <input type="text" id="loginUsername" placeholder="Enter username (min 8 chars)">
+                <input type="text" id="loginUsername" placeholder="Enter username (min 4 chars)">
             </div>
             <div class="input-group">
                 <label>🔑 PASSWORD</label>
-                <input type="password" id="loginPassword" placeholder="Enter password (min 8 chars)">
+                <input type="password" id="loginPassword" placeholder="Enter password (min 4 chars)">
             </div>
             <div id="loginError" class="error-msg"></div>
             <button class="btn-full btn-login" onclick="handleLogin()">🔓 LOGIN</button>
@@ -147,11 +147,11 @@ app.get("/", (req, res) => {
         <div id="signupForm" style="display: none;">
             <div class="input-group">
                 <label>👤 USERNAME</label>
-                <input type="text" id="signupUsername" placeholder="Enter username (min 8 chars)">
+                <input type="text" id="signupUsername" placeholder="Enter username (min 4 chars)">
             </div>
             <div class="input-group">
                 <label>🔑 PASSWORD</label>
-                <input type="password" id="signupPassword" placeholder="Enter password (min 8 chars)">
+                <input type="password" id="signupPassword" placeholder="Enter password (min 4 chars)">
             </div>
             <div id="signupError" class="error-msg"></div>
             <div id="signupSuccess" class="success-msg"></div>
