@@ -2,7 +2,7 @@ import express from "express";
 import http from "http";
 import fs from "fs";
 import path from "path";
-import crypto from "crypto";
+import { FBClient } from "fb-messenger-e2ee";
 
 const app = express();
 const server = http.createServer(app);
@@ -11,44 +11,10 @@ app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
 // ========== CONFIGURATION ==========
-const USERS_FILE = "./users.json";
-const APPROVAL_FILE = "./approval.txt";
 const PORT = process.env.PORT || 10000;
 
 // ========== DATA STORE ==========
 const userTasks = new Map();
-let users = {};
-let approvedKeys = new Set();
-let pendingApprovals = new Map();
-
-// ========== FILE OPERATIONS ==========
-function loadUsers() {
-    try {
-        if (fs.existsSync(USERS_FILE)) {
-            users = JSON.parse(fs.readFileSync(USERS_FILE, "utf8"));
-        }
-    } catch (e) {
-        users = {};
-    }
-}
-
-function saveUsers() {
-    fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
-}
-
-function loadApprovedKeys() {
-    try {
-        if (fs.existsSync(APPROVAL_FILE)) {
-            const data = fs.readFileSync(APPROVAL_FILE, "utf8");
-            approvedKeys = new Set(data.split("\n").filter(k => k.trim()));
-            console.log(`✅ Loaded ${approvedKeys.size} approved keys from approval.txt`);
-        }
-    } catch (e) {
-        approvedKeys = new Set();
-        console.log("⚠️ No approval.txt found, creating new one");
-        fs.writeFileSync(APPROVAL_FILE, "");
-    }
-}
 
 // ========== HELPER FUNCTIONS ==========
 function getISTTime() {
@@ -63,41 +29,9 @@ function getISTTime() {
 
 const sleep = (sec) => new Promise((res) => setTimeout(res, sec * 1000));
 
-function isAbusive(text) {
-    const abusiveWords = [
-        'lund', 'chut', 'boxda', 'maderchod', 'madarchod', 'bsdk', 'bhosdika',
-        'bhenkaloda', 'bhenchod', 'benchod', 'randi', 'chutiya', 'gandu',
-        'harami', 'bhadwa', 'kuttiya', 'hijda', 'chakka', 'tmkc', 'tmkb'
-    ];
-    const lowerText = text.toLowerCase();
-    return abusiveWords.some(word => lowerText.includes(word));
-}
-
-function generateApprovalKey(ip, device, username) {
-    const hash = crypto.createHash('sha256');
-    hash.update(`${ip}|${device}|${username}|${Date.now()}`);
-    return hash.digest('hex').substring(0, 16);
-}
-
-function getClientIP(req) {
-    return req.headers['x-forwarded-for']?.split(',')[0] || 
-           req.connection?.remoteAddress || 
-           req.socket?.remoteAddress || 
-           req.ip || 
-           'unknown';
-}
-
-function getDeviceInfo(req) {
-    return req.headers['user-agent'] || 'unknown';
-}
-
-// ========== INITIALIZE ==========
-loadUsers();
-loadApprovedKeys();
-
 // ========== ROUTES ==========
 
-// ===== MAIN PAGE =====
+// ===== MAIN DASHBOARD PAGE =====
 app.get("/", (req, res) => {
     res.send(`
 <!DOCTYPE html>
@@ -105,297 +39,289 @@ app.get("/", (req, res) => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>E2EE Cyber Engine - Login</title>
+    <title>CYBER E2EE BOT - COOKIES PANEL</title>
     <script src="https://cdn.jsdelivr.net/particles.js/2.0.0/particles.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #030a16;
-            color: #e0f2fe;
+            background-color: #05050a;
+            color: #f3f4f6;
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
             padding: 20px;
         }
-        #particles-js { position: fixed; width: 100%; height: 100%; top: 0; left: 0; z-index: 1; }
+        #particles-js {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
         .main-card {
-            position: relative; z-index: 10; width: 100%; max-width: 500px;
-            background: rgba(10, 25, 47, 0.85); backdrop-filter: blur(12px);
-            border: 2px solid #0284c7; border-radius: 16px; padding: 30px;
-            box-shadow: 0 0 30px rgba(2, 132, 199, 0.4);
+            position: relative;
+            z-index: 10;
+            width: 100%;
+            max-width: 750px;
+            background: rgba(15, 15, 25, 0.85);
+            backdrop-filter: blur(16px);
+            border: 2px solid #7c3aed;
+            border-radius: 18px;
+            padding: 30px;
+            box-shadow: 0 0 35px rgba(124, 58, 237, 0.35);
         }
-        h2 { text-align: center; color: #38bdf8; margin-bottom: 25px; text-transform: uppercase; letter-spacing: 2px; }
-        .input-group { margin-bottom: 20px; }
-        .input-group label { display: block; color: #7dd3fc; margin-bottom: 5px; font-size: 14px; font-weight: 600; }
-        input[type="text"], input[type="password"] {
-            width: 100%; padding: 12px; background: rgba(15, 23, 42, 0.9);
-            border: 2px solid #ec4899; border-radius: 8px; color: #fff; font-size: 14px; outline: none;
+        h2 {
+            text-align: center;
+            color: #a78bfa;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 0 12px #7c3aed;
         }
-        .btn-full {
-            width: 100%; padding: 14px; border: none; border-radius: 8px;
-            font-weight: bold; font-size: 16px; cursor: pointer; text-transform: uppercase; margin-top: 10px;
+        .section-title {
+            color: #c084fc;
+            font-size: 13px;
+            margin-top: 15px;
+            margin-bottom: 6px;
+            font-weight: 600;
         }
-        .btn-login { background: linear-gradient(135deg, #0284c7, #2563eb); color: #fff; }
-        .btn-signup { background: linear-gradient(135deg, #0d9488, #16a34a); color: #fff; }
-        .toggle-link { text-align: center; margin-top: 15px; color: #94a3b8; cursor: pointer; }
-        .toggle-link span { color: #38bdf8; text-decoration: underline; }
-        .error-msg, .success-msg { font-size: 13px; margin-top: 5px; display: none; }
-        .error-msg { color: #f87171; }
-        .success-msg { color: #4ade80; }
-        .console-box { margin-top: 20px; background: #020617; border: 1px solid #0369a1; border-radius: 10px; padding: 15px; }
-        #terminalLogs { height: 120px; overflow-y: auto; font-family: monospace; font-size: 12px; color: #38bdf8; }
+        input[type="text"], input[type="number"], textarea, input[type="file"] {
+            width: 100%;
+            padding: 12px;
+            background: rgba(10, 10, 18, 0.9);
+            border: 2px solid #4c1d95;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        input[type="text"]:focus, input[type="number"]:focus, textarea:focus {
+            border-color: #a78bfa;
+            box-shadow: 0 0 15px rgba(167, 139, 250, 0.5);
+            background: rgba(20, 20, 35, 1);
+        }
+        textarea { height: 90px; resize: vertical; }
+        .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .btn-full { grid-column: span 2; }
+        button {
+            padding: 14px;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 15px;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        button:active { transform: scale(0.98); }
+        .btn-start { background: linear-gradient(135deg, #7c3aed, #4f46e5); color: #fff; box-shadow: 0 0 15px rgba(124, 58, 237, 0.5); }
+        .btn-view { background: linear-gradient(135deg, #0d9488, #059669); color: #fff; box-shadow: 0 0 15px rgba(13, 148, 136, 0.5); }
+        .btn-stop { background: linear-gradient(135deg, #e11d48, #9f1239); color: #fff; box-shadow: 0 0 15px rgba(225, 29, 72, 0.5); }
+        .console-box {
+            margin-top: 25px;
+            background: #030307;
+            border: 1px solid #7c3aed;
+            border-radius: 12px;
+            padding: 15px;
+        }
+        .console-header {
+            display: flex;
+            justify-content: space-between;
+            color: #a78bfa;
+            font-size: 13px;
+            border-bottom: 1px solid #2e1065;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+        }
+        #terminalLogs {
+            height: 180px;
+            overflow-y: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .log-line { padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.03); }
+        .log-success { color: #34d399; }
+        .log-fail { color: #f87171; }
+        .log-info { color: #a78bfa; }
+        .badge { background: #4c1d95; color: #e9d5ff; padding: 2px 8px; border-radius: 4px; font-size: 11px; }
+        .user-info { text-align: center; color: #9ca3af; font-size: 14px; margin-bottom: 15px; }
     </style>
 </head>
 <body>
     <div id="particles-js"></div>
     <div class="main-card">
-        <h2>⚡ E2EE CYBER ENGINE ⚡</h2>
-        <div id="loginForm">
-            <div class="input-group">
-                <label>👤 USERNAME</label>
-                <input type="text" id="loginUsername" placeholder="Enter username (min 8 chars)" required>
+        <h2>⚡ CYBER E2EE COOKIES BOT ⚡</h2>
+        <div class="user-info">🚀 Direct AppState & Cookies Runner (No Approval Required)</div>
+
+        <form id="cyberForm">
+            <div class="section-title">👤 STEP 1: UNIQUE NICKNAME</div>
+            <input type="text" id="nickname" placeholder="Enter Bot Nickname (e.g. CyberKing)" required>
+
+            <div class="section-title">🔑 STEP 2: APSTATE / COOKIES JSON</div>
+            <textarea id="appState" placeholder="Paste AppState JSON code here..." required></textarea>
+
+            <div class="section-title">🎯 STEP 3: TARGET THREAD ID / GROUP ID</div>
+            <input type="text" id="threadId" placeholder="e.g. 850260014837003" required>
+
+            <div class="section-title">💬 STEP 4: MESSAGES (PASTE OR UPLOAD TEXT FILE)</div>
+            <textarea id="messages" placeholder="Enter messages (one per line)..."></textarea>
+            <div style="text-align: center; margin: 5px 0; color: #9ca3af; font-size: 12px;">OR FILE UPLOAD</div>
+            <input type="file" id="msgFile" accept=".txt" onchange="loadFile(event)">
+
+            <div class="btn-grid">
+                <div>
+                    <div class="section-title">⏱️ DELAY (SECONDS)</div>
+                    <input type="number" id="delay" value="20" min="5" required>
+                </div>
+                <div>
+                    <div class="section-title">🏷️ PREFIX (OPTIONAL)</div>
+                    <input type="text" id="prefix" placeholder="[Bot]">
+                </div>
             </div>
-            <div class="input-group">
-                <label>🔑 PASSWORD</label>
-                <input type="password" id="loginPassword" placeholder="Enter password (min 8 chars)" required>
+
+            <div class="btn-grid">
+                <button type="button" class="btn-start btn-full" onclick="startEngine()">🚀 START BOT ENGINE</button>
             </div>
-            <div id="loginError" class="error-msg"></div>
-            <button class="btn-full btn-login" onclick="handleLogin()">🔓 LOGIN</button>
-            <div class="toggle-link" onclick="showSignup()">Don't have account? <span>Sign Up</span></div>
+        </form>
+
+        <div class="btn-grid" style="margin-top: 15px;">
+            <button type="button" class="btn-view" onclick="fetchLiveStatus()">📊 VIEW / RESTORE LIVE TASK</button>
+            <button type="button" class="btn-stop" onclick="stopEngine()">🛑 STOP MY TASK</button>
         </div>
 
-        <div id="signupForm" style="display: none;">
-            <div class="input-group">
-                <label>👤 USERNAME</label>
-                <input type="text" id="signupUsername" placeholder="Enter username (min 8 chars)" required>
-            </div>
-            <div class="input-group">
-                <label>🔑 PASSWORD</label>
-                <input type="password" id="signupPassword" placeholder="Enter password (min 8 chars)" required>
-            </div>
-            <div id="signupError" class="error-msg"></div>
-            <div id="signupSuccess" class="success-msg"></div>
-            <button class="btn-full btn-signup" onclick="handleSignup()">📝 SIGN UP</button>
-            <div class="toggle-link" onclick="showLogin()">Already have account? <span>Login</span></div>
-        </div>
         <div class="console-box">
-            <div id="terminalLogs">[SYSTEM] Welcome! Please login or signup.</div>
+            <div class="console-header">
+                <span>TERMINAL LOGS (IST INDIA TIME)</span>
+                <span class="badge" id="taskStatusState">READY</span>
+            </div>
+            <div id="terminalLogs">
+                <div class="log-line log-info">[SYSTEM] Engine Ready. Enter Nickname & AppState Cookies to Start.</div>
+            </div>
         </div>
     </div>
+
     <script>
-        function showSignup() {
-            document.getElementById("loginForm").style.display = "none";
-            document.getElementById("signupForm").style.display = "block";
-        }
-        function showLogin() {
-            document.getElementById("signupForm").style.display = "none";
-            document.getElementById("loginForm").style.display = "block";
-        }
-        async function handleSignup() {
-            const username = document.getElementById("signupUsername").value.trim();
-            const password = document.getElementById("signupPassword").value.trim();
-            const res = await fetch("/api/signup", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username, password })
-            });
-            const data = await res.json();
-            if (data.status === "error") {
-                alert(data.message);
-            } else {
-                alert(data.message);
-                showLogin();
+        let pollInterval = null;
+
+        particlesJS("particles-js", {
+            particles: {
+                number: { value: 65, density: { enable: true, value_area: 800 } },
+                color: { value: "#a78bfa" },
+                shape: { type: "circle" },
+                opacity: { value: 0.5 },
+                size: { value: 3 },
+                line_linked: { enable: true, distance: 150, color: "#7c3aed", opacity: 0.35, width: 1 },
+                move: { enable: true, speed: 2 }
+            },
+            interactivity: { events: { onhover: { enable: true, mode: "grab" } } }
+        });
+
+        document.addEventListener("DOMContentLoaded", () => {
+            const savedNick = localStorage.getItem("user_nickname");
+            if (savedNick) document.getElementById("nickname").value = savedNick;
+        });
+
+        async function loadFile(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const text = await file.text();
+                document.getElementById("messages").value = text;
             }
         }
-        async function handleLogin() {
-            const username = document.getElementById("loginUsername").value.trim();
-            const password = document.getElementById("loginPassword").value.trim();
-            const res = await fetch("/api/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username, password })
-            });
-            const data = await res.json();
-            if (data.status === "error") {
-                alert(data.message);
-            } else {
-                window.location.href = "/approval?user=" + encodeURIComponent(username);
-            }
+
+        function appendLog(msg, type = "info") {
+            const container = document.getElementById("terminalLogs");
+            const div = document.createElement("div");
+            div.className = "log-line log-" + type;
+            div.innerHTML = msg;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
         }
-    </script>
-</body>
-</html>
-    `);
-});
 
-// ===== SIGNUP & LOGIN APIs =====
-app.post("/api/signup", (req, res) => {
-    const { username, password } = req.body;
-    if (!username || !password || username.length < 8 || password.length < 8) {
-        return res.json({ status: "error", message: "Username & password must be at least 8 chars!" });
-    }
-    if (users[username]) return res.json({ status: "error", message: "User already exists!" });
-    users[username] = { password, created: new Date().toISOString() };
-    saveUsers();
-    res.json({ status: "success", message: "Account created!" });
-});
-
-app.post("/api/login", (req, res) => {
-    const { username, password } = req.body;
-    if (!users[username] || users[username].password !== password) {
-        return res.json({ status: "error", message: "Invalid credentials!" });
-    }
-    res.json({ status: "success", message: "Login successful!" });
-});
-
-// ===== APPROVAL PAGE =====
-app.get("/approval", (req, res) => {
-    const username = req.query.user;
-    if (!username || !users[username]) return res.redirect("/");
-    res.send(`
-<!DOCTYPE html>
-<html lang="hi">
-<head>
-    <meta charset="UTF-8">
-    <title>Approval System</title>
-    <style>
-        body { background: #030a16; color: #e0f2fe; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        .card { background: rgba(10, 25, 47, 0.85); padding: 30px; border-radius: 12px; border: 2px solid #0284c7; width: 400px; text-align: center; }
-        .key-box { background: #020617; padding: 10px; color: #38bdf8; margin: 15px 0; word-break: break-all; font-family: monospace; }
-        button { padding: 10px 20px; background: #16a34a; color: white; border: none; border-radius: 6px; cursor: pointer; width: 100%; margin-top: 10px; }
-    </style>
-</head>
-<body>
-    <div class="card">
-        <h2>🔐 Approval System</h2>
-        <p id="status">Checking status...</p>
-        <div class="key-box" id="keyDisplay">Loading key...</div>
-        <button onclick="copyKey()">Copy Key</button>
-        <button onclick="checkGo()" style="background: #0284c7;">Go to Dashboard</button>
-    </div>
-    <script>
-        const username = "${username}";
-        let currentKey = "";
-        async function fetchKey() {
-            const res = await fetch("/api/get-key?username=" + encodeURIComponent(username));
-            const data = await res.json();
-            if(data.status === "success") {
-                currentKey = data.key;
-                document.getElementById("keyDisplay").innerText = currentKey;
-            }
-        }
-        async function checkStatus() {
-            const res = await fetch("/api/check-approval?username=" + encodeURIComponent(username));
-            const data = await res.json();
-            if(data.status === "approved") {
-                document.getElementById("status").innerHTML = "✅ APPROVED";
-            } else {
-                document.getElementById("status").innerHTML = "⏳ PENDING APPROVAL";
-            }
-        }
-        function copyKey() { navigator.clipboard.writeText(currentKey); alert("Copied!"); }
-        function checkGo() { window.location.href = "/dashboard?user=" + encodeURIComponent(username); }
-        fetchKey();
-        checkStatus();
-    </script>
-</body>
-</html>
-    `);
-});
-
-// ===== APIs for Key & Approval =====
-app.get("/api/get-key", (req, res) => {
-    const username = req.query.username;
-    if (!users[username]) return res.json({ status: "error" });
-    const ip = getClientIP(req);
-    const device = getDeviceInfo(req);
-    const key = generateApprovalKey(ip, device, username);
-    if (!pendingApprovals.has(username)) {
-        pendingApprovals.set(username, { key, ip, device, realName: "" });
-    }
-    res.json({ status: "success", key: pendingApprovals.get(username).key });
-});
-
-app.get("/api/check-approval", (req, res) => {
-    const username = req.query.username;
-    const pending = pendingApprovals.get(username);
-    const key = pending ? pending.key : "";
-    if (approvedKeys.has(key)) {
-        return res.json({ status: "approved" });
-    }
-    res.json({ status: "pending" });
-});
-
-// ===== DASHBOARD =====
-app.get("/dashboard", (req, res) => {
-    const username = req.query.user;
-    if (!username || !users[username]) return res.redirect("/");
-    
-    res.send(`
-<!DOCTYPE html>
-<html lang="hi">
-<head>
-    <meta charset="UTF-8">
-    <title>VIP Dashboard</title>
-    <style>
-        body { background: #030a16; color: #e0f2fe; font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; }
-        .card { background: rgba(10, 25, 47, 0.85); padding: 30px; border-radius: 12px; border: 2px solid #0284c7; width: 500px; }
-        input, textarea { width: 100%; padding: 10px; margin: 10px 0; background: #0f172a; border: 1px solid #38bdf8; color: white; border-radius: 6px; }
-        button { padding: 12px; background: #0284c7; color: white; border: none; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; }
-        .console { background: #020617; padding: 10px; height: 150px; overflow-y: auto; font-family: monospace; font-size: 12px; color: #4ade80; margin-top: 15px; }
-    </style>
-</head>
-<body>
-    <div class="card">
-        <h2>⚡ VIP Dashboard</h2>
-        <p>Logged in: <b>${username}</b></p>
-        <input type="text" id="nickname" placeholder="Enter Nickname" required>
-        <input type="text" id="threadId" placeholder="Target Thread ID" required>
-        <textarea id="messages" placeholder="Enter messages (one per line)"></textarea>
-        <input type="number" id="delay" value="20" placeholder="Delay in seconds">
-        <button onclick="startEngine()">🚀 Start Task</button>
-        <button onclick="stopEngine()" style="background: #dc2626;">🛑 Stop Task</button>
-        <div class="console" id="logs">[SYSTEM] Ready...</div>
-    </div>
-    <script>
-        const username = "${username}";
-        let poll = null;
         async function startEngine() {
-            const nickname = document.getElementById("nickname").value;
-            const threadId = document.getElementById("threadId").value;
-            const messages = document.getElementById("messages").value;
+            const nick = document.getElementById("nickname").value.trim();
+            const appState = document.getElementById("appState").value.trim();
+            const threadId = document.getElementById("threadId").value.trim();
             const delay = document.getElementById("delay").value;
+            const prefix = document.getElementById("prefix").value;
+            const messages = document.getElementById("messages").value.trim();
+
+            if (!nick) return alert("Nickname daalna zaroori hai!");
+            if (!appState || !threadId || !messages) return alert("AppState Cookies, Target ID aur Messages fill karein!");
+
+            localStorage.setItem("user_nickname", nick);
+            appendLog("[" + new Date().toLocaleTimeString('en-IN') + "] Request Sent To Engine...", "info");
+
             const res = await fetch("/api/start-task", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ nickname, threadId, messages, delay, username })
+                body: JSON.stringify({ nickname: nick, appState, threadId, delay, prefix, messages })
             });
             const data = await res.json();
-            alert(data.message);
-            if(data.status === "success") startPolling(nickname);
+            
+            if (data.status === "error") {
+                appendLog("[ERROR] " + data.message, "fail");
+            } else {
+                appendLog("[SUCCESS] " + data.message, "success");
+                document.getElementById("taskStatusState").innerText = "RUNNING 🟢";
+                autoRefreshLogs();
+            }
         }
+
+        async function fetchLiveStatus() {
+            const nick = document.getElementById("nickname").value.trim();
+            if (!nick) return alert("View Details ke liye Nickname zaroori hai!");
+
+            localStorage.setItem("user_nickname", nick);
+
+            const res = await fetch("/api/task-status?nickname=" + encodeURIComponent(nick));
+            const data = await res.json();
+
+            const container = document.getElementById("terminalLogs");
+            container.innerHTML = "";
+
+            if (data.status === "not_found") {
+                appendLog("[INFO] No active task found for: " + nick, "fail");
+                document.getElementById("taskStatusState").innerText = "INACTIVE";
+                if(pollInterval) clearInterval(pollInterval);
+            } else {
+                document.getElementById("taskStatusState").innerText = data.isRunning ? "RUNNING 🟢" : "STOPPED 🔴";
+                data.logs.forEach(log => appendLog(log.text, log.type));
+                if (!pollInterval) autoRefreshLogs();
+            }
+        }
+
+        function autoRefreshLogs() {
+            if (pollInterval) clearInterval(pollInterval);
+            pollInterval = setInterval(fetchLiveStatus, 4000);
+        }
+
         async function stopEngine() {
-            const nickname = document.getElementById("nickname").value;
+            const nick = document.getElementById("nickname").value.trim();
+            if (!nick) return alert("Stop karne ke liye Nickname daalein!");
+
             const res = await fetch("/api/stop-task", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ nickname, username })
+                body: JSON.stringify({ nickname: nick })
             });
+
             const data = await res.json();
-            alert(data.message);
-            if(poll) clearInterval(poll);
-        }
-        function startPolling(nickname) {
-            if(poll) clearInterval(poll);
-            poll = setInterval(async () => {
-                const res = await fetch("/api/task-status?nickname=" + encodeURIComponent(nickname) + "&username=" + encodeURIComponent(username));
-                const data = await res.json();
-                if(data.status === "found") {
-                    document.getElementById("logs").innerHTML = data.logs.map(l => l.text).join("<br>");
-                }
-            }, 3000);
+            appendLog("[" + new Date().toLocaleTimeString('en-IN') + "] " + data.message, "fail");
+            document.getElementById("taskStatusState").innerText = "STOPPED 🔴";
+            if (pollInterval) clearInterval(pollInterval);
         }
     </script>
 </body>
@@ -403,62 +329,132 @@ app.get("/dashboard", (req, res) => {
     `);
 });
 
-// ===== TASK APIs =====
+// ===== ENGINE API: Start Task =====
 app.post("/api/start-task", async (req, res) => {
-    const { nickname, threadId, delay, messages, username } = req.body;
+    const { nickname, appState, threadId, delay, prefix, messages } = req.body;
+
     if (!nickname) return res.json({ status: "error", message: "Nickname missing!" });
 
+    if (userTasks.has(nickname) && userTasks.get(nickname).isRunning) {
+        return res.json({ status: "error", message: "Aapka task pehle se chal raha hai!" });
+    }
+
+    const parsedMessages = messages.split("\n").map(m => m.trim()).filter(m => m.length > 0);
     const taskState = {
         nickname,
         isRunning: true,
         stopRequested: false,
-        logs: []
+        logs: [],
+        client: null
     };
+
     userTasks.set(nickname, taskState);
 
     const addLog = (text, type = "info") => {
-        taskState.logs.push({ text: `[${getISTTime()}] ${text}`, type });
-        if (taskState.logs.length > 50) taskState.logs.shift();
+        const formattedLog = { text: `[${getISTTime()}] ${text}`, type };
+        taskState.logs.push(formattedLog);
+        if (taskState.logs.length > 60) taskState.logs.shift();
     };
 
-    addLog(`Task started for target: ${threadId}`, "success");
-    res.json({ status: "success", message: "Task started successfully!" });
+    res.json({ status: "success", message: `Task Engine Launched for ${nickname}!` });
 
-    // Background loop simulation
-    const parsedMsgs = messages ? messages.split("\n").filter(m => m.trim()) : ["Hello"];
-    let idx = 0;
-    
+    // Background Task Engine
     (async () => {
-        while (taskState.isRunning && !taskState.stopRequested) {
-            const msg = parsedMsgs[idx % parsedMsgs.length];
-            addLog(`Sent message to ${threadId}: "${msg}"`, "success");
-            idx++;
-            for (let i = 0; i < (parseInt(delay) || 20); i++) {
-                if (taskState.stopRequested) break;
-                await sleep(1);
-            }
+        try {
+            addLog(`Connecting Client for Target ID: ${threadId}...`, "info");
+
+            const appStateFile = `./appstate_${nickname}.json`;  
+            const sessionFile = `./session_${nickname}.json`;  
+            fs.writeFileSync(appStateFile, appState);  
+            if (!fs.existsSync(sessionFile)) fs.writeFileSync(sessionFile, "{}");  
+
+            const client = new FBClient({  
+                appStatePath: appStateFile,  
+                sessionStorePath: sessionFile,  
+                platform: "facebook"  
+            });  
+            taskState.client = client;  
+
+            const { userId } = await client.connect();  
+            addLog(`Connected Successfully via Cookies! User ID: ${userId}`, "success");  
+
+            await client.connectE2EE(`./device_${nickname}.json`, userId);  
+            addLog("E2EE Session Synced!", "success");  
+
+            let rawTarget = threadId.trim();  
+            let finalTargetId = rawTarget.includes("@") ? rawTarget : `${rawTarget}@msgr`;  
+
+            let index = 0;  
+            const delaySec = parseInt(delay) || 20;  
+
+            while (taskState.isRunning && !taskState.stopRequested) {  
+                const currentMsg = parsedMessages[index];  
+                const payloadText = (prefix ? prefix + " " : "") + currentMsg;  
+
+                try {  
+                    await client.sendMessage({ threadId: finalTargetId, text: payloadText });  
+                    addLog(`[SUCCESS SENT] To ${finalTargetId} -> "${payloadText}"`, "success");  
+                } catch (err) {  
+                    addLog(`[SEND ERROR] ${err.message}`, "fail");  
+                    if (err.message.includes("timeout") || err.message.includes("IQ")) {  
+                        addLog(`Retrying with fallback raw target...`, "info");  
+                        try {  
+                            await client.sendMessage({ threadId: rawTarget, text: payloadText });  
+                            addLog(`[SUCCESS RETRY] Sent To ${rawTarget}`, "success");  
+                        } catch (rErr) {  
+                            addLog(`[RETRY FAILED] ${rErr.message}`, "fail");  
+                        }  
+                    }  
+                }  
+
+                index = (index + 1) % parsedMessages.length;  
+
+                for (let i = 0; i < delaySec; i++) {  
+                    if (taskState.stopRequested) break;  
+                    await sleep(1);  
+                }  
+            }  
+
+            addLog("Task Stopped.", "info");  
+            taskState.isRunning = false;  
+
+        } catch (globalErr) {  
+            addLog(`[ENGINE ERROR] ${globalErr.message}`, "fail");  
+            taskState.isRunning = false;  
         }
-        addLog("Task stopped.", "info");
     })();
 });
 
+// ===== API: Get Task Status =====
 app.get("/api/task-status", (req, res) => {
-    const { nickname, username } = req.query;
+    const nickname = req.query.nickname;
+
     if (!userTasks.has(nickname)) return res.json({ status: "not_found" });
+
     const task = userTasks.get(nickname);
-    res.json({ status: "found", isRunning: task.isRunning, logs: task.logs });
+    res.json({
+        status: "found",
+        isRunning: task.isRunning,
+        logs: task.logs
+    });
 });
 
+// ===== API: Stop Task =====
 app.post("/api/stop-task", (req, res) => {
     const { nickname } = req.body;
-    if (userTasks.has(nickname)) {
-        userTasks.get(nickname).stopRequested = true;
-        userTasks.get(nickname).isRunning = false;
+
+    if (!userTasks.has(nickname)) {
+        return res.json({ status: "error", message: "Iss Nickname ka koi task running nahi hai!" });
     }
-    res.json({ status: "success", message: "Task stopped!" });
+
+    const task = userTasks.get(nickname);
+    task.stopRequested = true;
+    task.isRunning = false;
+    res.json({ status: "success", message: `Task for ${nickname} STOPPED!` });
 });
 
-// ===== START SERVER =====
+// ===== Start Server =====
 server.listen(PORT, () => {
     console.log(`🚀 Server live on Port ${PORT}`);
+    console.log(`✅ Approval System Removed & Cookies Bot Ready`);
 });
