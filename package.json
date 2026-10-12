@@ -1,30 +1,12 @@
 {
-  "name": "e2ee-cyber-engine",
+  "name": "fb-messenger-bot",
   "version": "1.0.0",
-  "description": "E2EE Cyber Engine with Approval System - VIP Dashboard",
+  "type": "module",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js"
+    "start": "node index.js"
   },
-  "keywords": [
-    "facebook",
-    "e2ee",
-    "messenger",
-    "cyber",
-    "engine",
-    "approval",
-    "system"
-  ],
-  "author": "Devil",
-  "license": "MIT",
   "dependencies": {
-    "express": "^4.18.2"
-  },
-  "devDependencies": {
-    "nodemon": "^3.0.1"
-  },
-  "engines": {
-    "node": ">=16.0.0"
+    "fb-messenger-e2e": "^latest"
   }
 }
